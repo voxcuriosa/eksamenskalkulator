@@ -2,11 +2,13 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 
-// 1. Kontroller beregningsmotoren (engine.mjs)
-const engineSource = fs.readFileSync('dist/engine.mjs', 'utf8');
-assert.doesNotMatch(engineSource, /\b(?:eval|fetch|XMLHttpRequest|WebSocket|EventSource|Worker|SharedWorker|Function)\s*\(/);
-assert.doesNotMatch(engineSource, /\b(?:sendBeacon|serviceWorker|localStorage|sessionStorage|indexedDB|innerHTML|outerHTML|document\.write)\b/);
-assert.doesNotMatch(engineSource, /https?:\/\//);
+// 1. Kontroller beregningsmotoren (engine.mjs, rational.mjs, combinatorics.mjs)
+for (const file of ['engine.mjs', 'rational.mjs', 'combinatorics.mjs']) {
+  const src = fs.readFileSync('dist/' + file, 'utf8');
+  assert.doesNotMatch(src, /\b(?:eval|fetch|XMLHttpRequest|WebSocket|EventSource|Worker|SharedWorker|Function)\s*\(/);
+  assert.doesNotMatch(src, /\b(?:sendBeacon|serviceWorker|localStorage|sessionStorage|indexedDB|innerHTML|outerHTML|document\.write)\b/);
+  assert.doesNotMatch(src, /https?:\/\//);
+}
 
 // 2. Kontroller brukergrensesnittkoden (app.mjs)
 const appSource = fs.readFileSync('dist/app.mjs', 'utf8');
@@ -26,8 +28,6 @@ assert.match(html, /connect-src 'none'/);
 assert.match(html, /worker-src 'self'/);
 assert.match(html, /manifest-src 'self'/);
 assert.doesNotMatch(html, /\son[a-z]+=|javascript:|<iframe|<form|<object|<embed/i);
-
-// Kontroller at ingen inline-stil eksisterer
 assert.doesNotMatch(html, /<style\b/i);
 
 const localAssets = [...html.matchAll(/(?:src|href)="([^"]+)"/g)]
@@ -35,7 +35,6 @@ const localAssets = [...html.matchAll(/(?:src|href)="([^"]+)"/g)]
   .filter(link => !link.startsWith('http'))
   .sort();
 
-// index.html skal utelukkende laste app-ressurser (ikke info.html eller SEB-fil direkte)
 assert.deepEqual(
   localAssets,
   ['app.mjs', 'manifest.webmanifest', 'styles.css']

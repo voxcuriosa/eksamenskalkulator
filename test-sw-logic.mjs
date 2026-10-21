@@ -39,4 +39,4 @@ if (!sw.includes('ALLOWED_PATHS.has(url.pathname)')) {
   throw new Error('sw.js mangler kontroll mot ALLOWED_PATHS!');
 }
 
-console.log('✔ Service Worker arkitekturtest v0.3.0 bestått: frosset versjon, ingen nettverksfallback, avgrenset scope og cacher.');
+console.log('✔ Service Worker arkitekturtest v0.4.0 bestått: frosset versjon, ingen nettverksfallback, avgrenset scope og cacher.');

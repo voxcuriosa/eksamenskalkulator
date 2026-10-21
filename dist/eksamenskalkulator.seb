@@ -101,6 +101,26 @@
             <key>regex</key>
             <false/>
             <key>expression</key>
+            <string>https://voxcuriosa.no/kalkulator/rational.mjs</string>
+        </dict>
+        <dict>
+            <key>action</key>
+            <integer>1</integer>
+            <key>active</key>
+            <true/>
+            <key>regex</key>
+            <false/>
+            <key>expression</key>
+            <string>https://voxcuriosa.no/kalkulator/combinatorics.mjs</string>
+        </dict>
+        <dict>
+            <key>action</key>
+            <integer>1</integer>
+            <key>active</key>
+            <true/>
+            <key>regex</key>
+            <false/>
+            <key>expression</key>
             <string>https://voxcuriosa.no/kalkulator/release.mjs</string>
         </dict>
         <dict>

@@ -66,7 +66,29 @@
       </div>
       <p><small><em>Dette er aktuelle kandidater, ikke en bekreftet godkjenningsliste fra Udir. De billigste prisene kan også gjelde begrenset lager. Biltema har en modell til 99,90 kr, men den har likningsløser og faller derfor utenfor kravene (<a href="https://www.biltema.no/kontor-teknikk/kontor/kontormaskiner/kalkulator/teknisk-kalkulator-2000041972" target="_blank" rel="noopener noreferrer">Biltemas funksjonsliste</a>).</em></small></p>
 
-      <h2>2. Teknisk utprøving i Safe Exam Browser (SEB)</h2>
+      <h2>2. Funksjonsomfang og teknisk referansemodell</h2>
+      <p>Kalkulatorens funksjonssett er utvidet med en anerkjent vitenskapelig standardmodell for skolebruk som funksjonell referanse:</p>
+      <ul>
+        <li><strong>Eksakt brøkregning:</strong> Rasjonal aritmetikk med vilkårlig presisjon for heltall. Viser forkortet brøk, blandet tall (a b/c) og muliggjør veksling mellom brøk og desimaltall (S⇔D).</li>
+        <li><strong>Kombinatorikk:</strong> Fakultet (n!), permutasjoner (nPr) og kombinasjoner (nCr) med streng heltallskontroll og grensehåndtering.</li>
+        <li><strong>Ans og tallminner:</strong> Ans tar vare på forrige numeriske resultat. Ni uavhengige tallminner (A, B, C, D, E, F, M, X, Y) samt M+ og M− for akkumulering. Minner tømmes automatisk når siden lukkes.</li>
+        <li><strong>Utvidet envariabel statistikk:</strong> Antall observasjoner (n), sum (Σx), kvadratsum (Σx²), minimum (minX), maksimum (maxX), gjennomsnitt (x̄), populasjonsstandardavvik (σ) og utvalgsstandardavvik (s).</li>
+        <li><strong>Visningsformater:</strong> NORM (standard inntil 12 sifre), FIX (fast antall desimaler 0–9) og SCI (vitenskapelig notasjon 1–9 gjeldende sifre). Visningsavrunding endrer aldri den interne verdien.</li>
+      </ul>
+
+      <h3>Gjenværende forskjeller fra den fysiske referansemodellen</h3>
+      <p>Følgende funksjoner fra referansemodellen er bevisst ikke implementert på nåværende tidspunkt, og krever eventuell separat avklaring med Udir:</p>
+      <ul>
+        <li>Eksakt forenkling av generelle rotuttrykk (f.eks. automatisk omskriving av √8 til 2√2) eller eksakte uttrykk med π.</li>
+        <li>Hyperbolske funksjoner (sinh, cosh, tanh) og gradianer (GRA).</li>
+        <li>Vinkelangivelse i grader, minutter og sekunder (° ' '').</li>
+        <li>Koordinatkonvertering (Pol/Rec).</li>
+        <li>Primtallsfaktorisering og tilfeldige tall (Ran#/RanInt#).</li>
+        <li>Verditabeller for funksjoner.</li>
+        <li>Tovariabel statistikk og regresjonsanalyse (lineær, kvadratisk, logaritmisk, eksponentiell, potens og invers regresjon).</li>
+      </ul>
+
+      <h2>3. Teknisk utprøving i Safe Exam Browser (SEB)</h2>
       <p>En SEB-konfigurasjon tilbys for teknisk utprøving. Oppsettet må valideres på aktuelle Windows- og macOS-versjoner før det kan brukes i en eksamenspilot.</p>
       
       <div class="action-row">
@@ -82,31 +104,31 @@
         <li>Browser Exam Key (BEK) og Config Key (CK) kan bekrefte at SEB-klienten kjører med riktig konfigurasjon, men verifiserer ikke alene nettsidefilenes integritet eller gjør løsningen godkjent.</li>
       </ul>
 
-      <h2>3. Offlineberedskap og lokal kjøring</h2>
+      <h2>4. Offlineberedskap og lokal kjøring</h2>
       <p>Alle matematiske beregninger utføres lokalt på enheten. En ferdig innlastet kalkulator trenger ingen beregningsserver. Oppfrisking uten nett forutsetter ferdig installert offline-cache og støtte i den aktuelle nettleseren eller SEB-versjonen.</p>
       <ul>
         <li><strong>Klargjøring:</strong> Første innlasting og eventuelle worker-oppdateringer krever nettverk for å hente programfilene.</li>
-        <li><strong>Verifisering:</strong> Statusen «Klar for offlinebruk» vises først når riktig worker-versjon er aktiv, gjeldende side er kontrollert av workeren, og alle nødvendige filer for samme versjon er verifisert i den lokale cachen.</li>
+        <li><strong>Verifisering:</strong> Statusen «Klar for offlinebruk» vises først når riktig worker-versjon er aktiv, gjeldende side er kontrollert av workeren, og alle nødvendige filer for samme versjon er verifisert i den lokale cachen via toveis meldingskanal.</li>
         <li><strong>Frosset versjon:</strong> En aktiv økt benytter utelukkende ressursene fra sin installerte utgivelse for å hindre at ulike kodeversjoner blandes under bruk.</li>
       </ul>
 
-      <h2>4. Sikkerhetstiltak og databehandling</h2>
+      <h2>5. Sikkerhetstiltak og databehandling</h2>
       <ul>
         <li>Ingen CAS, graftegner, likningsløser, brukerprogrammering eller formelbank.</li>
         <li>En avgrenset parser behandler regneuttrykk som data.</li>
         <li>Elevens inndata kjøres ikke som programkode eller HTML.</li>
-        <li>Kalkulatorkoden sender ikke regneuttrykk eller statistikkverdier til serveren.</li>
-        <li>Elevens inndata og resultater holdes i sidens minne og lagres ikke i databaser eller persistent lagring.</li>
+        <li>Kalkulatorkoden sender ikke regneuttrykk, minneverdier eller statistikkverdier til serveren.</li>
+        <li>Elevens inndata og resultater holdes i sidens minne og lagres ikke i databaser, cookies eller persistent nettleserlagring.</li>
         <li>Programfiler kan lagres i offline-cache. Sletting av cache og nettlesertilstand avhenger av miljøets konfigurasjon.</li>
         <li>Webserveren kan registrere vanlige tilgangslogger ved innlasting.</li>
         <li>CSP, SEB og eventuelle nettverkssperrer er ulike sikkerhetslag som må testes hver for seg.</li>
       </ul>
 
-      <h2>5. Åpen kildekode og transparens</h2>
+      <h2>6. Åpen kildekode og transparens</h2>
       <p>Hele prosjektet er utviklet som åpen kildekode (open source) for full innsyn i beregningslogikk, tilstandsmaskin og sikkerhetsavgrensninger:</p>
       <p>Kildekode og dokumentasjon: <a href="https://github.com/voxcuriosa/eksamenskalkulator" target="_blank" rel="noopener noreferrer"><strong>github.com/voxcuriosa/eksamenskalkulator</strong></a></p>
 
-      <h2>6. Integritet og sjekksummer</h2>
+      <h2>7. Integritet og sjekksummer</h2>
       <p>SHA-256-sjekksummer kan brukes til å kontrollere filer mot en kjent referanseversjon. For eksamensbruk må referansen distribueres gjennom en betrodd kanal, og kontrollen inngå i utrullingen. En sjekksumfil på samme server gir ikke alene beskyttelse mot manipulering.</p>
     </article>
   </main>

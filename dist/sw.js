@@ -1,5 +1,5 @@
 // Service Worker for Eksamenskalkulator 2027 (avgrenset til /kalkulator/)
-const APP_VERSION = '0.3.0';
+const APP_VERSION = '0.4.0';
 const CACHE_PREFIX = 'eksamenskalkulator-';
 const CURRENT_CACHE_NAME = `${CACHE_PREFIX}v${APP_VERSION}`;
 
@@ -10,6 +10,8 @@ const REQUIRED_RESOURCES = [
   './styles.css',
   './app.mjs',
   './engine.mjs',
+  './rational.mjs',
+  './combinatorics.mjs',
   './release.mjs',
   './manifest.webmanifest'
 ];
@@ -21,13 +23,13 @@ const ALLOWED_PATHS = new Set([
   '/kalkulator/styles.css',
   '/kalkulator/app.mjs',
   '/kalkulator/engine.mjs',
+  '/kalkulator/rational.mjs',
+  '/kalkulator/combinatorics.mjs',
   '/kalkulator/release.mjs',
   '/kalkulator/manifest.webmanifest'
 ]);
 
 self.addEventListener('install', (event) => {
-  // Installer alle ressurser for denne utgivelsen samlet
-  // skipWaiting() kalles IKKE her; en pågående elevøkt skal aldri forstyrres
   event.waitUntil(
     caches.open(CURRENT_CACHE_NAME).then((cache) => {
       return cache.addAll(REQUIRED_RESOURCES);
@@ -36,8 +38,6 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  // Slett kun gamle cacher som tilhører denne kalkulatoren (CACHE_PREFIX)
-  // Rører ALDRI andre cacher på samme opprinnelse (f.eks. voxcuriosa-v8)
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
@@ -52,7 +52,6 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Kommunikasjon med MessageChannel eller event.source for verifisering
 self.addEventListener('message', (event) => {
   const data = event.data;
   if (!data || !data.type) return;
@@ -108,7 +107,6 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
-  // 1. Eksterne forespørsler blokkeres med 403 Forbidden for kontrollerte sider
   if (url.origin !== self.location.origin) {
     event.respondWith(new Response('Ekstern tilgang er blokkert i kalkulatormodus.', {
       status: 403,
@@ -118,17 +116,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Forespørsler utenfor /kalkulator/
   if (!url.pathname.startsWith('/kalkulator/')) {
-    // La workeren ignorere forespørsler til andre nettstedsdeler
     return;
   }
 
-  // 3. Kontroller om forespørselen er en av kalkulatorens tillatte ressursadresser
-  // info.html, .seb og sjekksumfiler skal IKKE caches eller betjenes som programressurser av denne workeren
   const isAllowedPath = ALLOWED_PATHS.has(url.pathname);
 
-  // Hvis det er en ukjent ressurs eller query på en kontrollert kalkulatorside: avvis uten nettverksfallback!
   if (!isAllowedPath) {
     event.respondWith(new Response('Uautorisert ressursadresse i eksamensmodus.', {
       status: 404,
@@ -138,16 +131,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 4. Betjen strengt fra frosset versjonscache
   event.respondWith(
     caches.open(CURRENT_CACHE_NAME).then((cache) => {
       return cache.match(event.request).then((cachedResponse) => {
         if (cachedResponse) {
           return cachedResponse;
         }
-
-        // Hvis en påkrevd ressurs mangler i ferdig installert cache:
-        // Skal IKKE repareres med vilkårlig nettverkshenting inn i gammel versjon!
         return new Response('Ressursen mangler i den frosne utgivelsescachen.', {
           status: 503,
           statusText: 'Service Unavailable',

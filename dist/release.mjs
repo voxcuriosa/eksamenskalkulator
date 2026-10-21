@@ -1,24 +1,26 @@
 export const RELEASE = Object.freeze({
-  version: '0.3.0',
+  version: '0.4.0',
   cachePrefix: 'eksamenskalkulator-',
-  cacheName: 'eksamenskalkulator-v0.3.0',
-  // Liste over nøyaktige relative adresser som inngår i utgivelsen
+  cacheName: 'eksamenskalkulator-v0.4.0',
   resources: [
     './',
     './index.html',
     './styles.css',
     './app.mjs',
     './engine.mjs',
+    './rational.mjs',
+    './combinatorics.mjs',
     './release.mjs',
     './manifest.webmanifest'
   ],
-  // Nøyaktige normaliserte URL-stier som kalkulatoren støtter
   allowedPaths: [
     '/kalkulator/',
     '/kalkulator/index.html',
     '/kalkulator/styles.css',
     '/kalkulator/app.mjs',
     '/kalkulator/engine.mjs',
+    '/kalkulator/rational.mjs',
+    '/kalkulator/combinatorics.mjs',
     '/kalkulator/release.mjs',
     '/kalkulator/manifest.webmanifest'
   ]

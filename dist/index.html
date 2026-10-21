@@ -1,23 +1,175 @@
 <!doctype html>
 <html lang="nb"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'none'; font-src 'none'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; worker-src 'self'; frame-src 'none'; media-src 'none'; manifest-src 'self'"><meta name="referrer" content="no-referrer"><title>Eksamenskalkulator · 2027</title><link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="styles.css"><script type="module" src="app.mjs"></script></head>
 <body><header class="topbar"><div class="brand"><span class="brand-icon" aria-hidden="true">∑</span><span>Eksamenskalkulator<span class="brand-sub">VITENSKAPELIG KALKULATOR</span></span></div><span class="demo-tag">DEMO · VÅR 2027</span></header>
-<main><div class="intro"><div><p class="eyebrow">ET AVGRENSET VERKTØY FOR MATEMATIKK</p><h1>Plass til å tenke.</h1><p class="lead">Regn med tall. Før løsningen på papir.</p></div><button class="help-button" id="help-open">? <span>Brukerveiledning</span></button></div>
-<section class="workspace" aria-label="Kalkulator"><div class="toolbar"><div class="tabs" role="tablist" aria-label="Verktøy"><button id="calc-tab" role="tab" aria-selected="true" aria-controls="calc-panel" tabindex="0">Kalkulator</button><button id="stats-tab" role="tab" aria-selected="false" aria-controls="stats-panel" tabindex="-1">Statistikk</button></div><div class="angle" role="group" aria-label="Vinkelmodus"><button id="deg" aria-pressed="true">DEG</button><button id="rad" aria-pressed="false">RAD</button></div></div>
-<div id="calc-panel" role="tabpanel" aria-labelledby="calc-tab"><div class="screen"><label for="expression">REGNEUTTRYKK</label><input id="expression" type="text" maxlength="2048" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="calc-message" placeholder="Skriv et uttrykk, eller bruk tastene"><div class="answer-line"><span id="answer-label">SVAR</span><output id="answer" aria-live="polite" aria-atomic="true">0</output></div><p id="calc-message" role="status">Grader (DEG) · 12 gjeldende sifre i visningen</p></div>
-<div class="keypad"><div class="science" aria-label="Vitenskapelige funksjoner">
-<button data-insert="sqrt(" aria-label="Kvadratrot">√x</button><button data-insert="^2" aria-label="Kvadrat">x²</button><button data-insert="^" aria-label="Potens">xʸ</button>
-<button data-insert="root(" aria-label="N-te rot">ⁿ√x</button><button data-insert="log(" aria-label="Logaritme med grunntall 10">log</button><button data-insert="ln(" aria-label="Naturlig logaritme">ln</button>
-<button data-insert="10^(" aria-label="10 opphøyd i">10ˣ</button><button data-insert="e^(" aria-label="e opphøyd i">eˣ</button><button data-insert="pi" aria-label="Pi">π</button>
-<button data-insert="sin(" aria-label="Sinus">sin</button><button data-insert="cos(" aria-label="Cosinus">cos</button><button data-insert="tan(" aria-label="Tangens">tan</button>
-<button data-insert="asin(" aria-label="Invers sinus">sin⁻¹</button><button data-insert="acos(" aria-label="Invers cosinus">cos⁻¹</button><button data-insert="atan(" aria-label="Invers tangens">tan⁻¹</button>
-<button data-insert="(" aria-label="Venstre parentes">(</button><button data-insert=")" aria-label="Høyre parentes">)</button><button data-insert=";" aria-label="Skilletegn for n-te rot">;</button>
-</div><div class="numbers" aria-label="Tall og regnearter">
-<button id="clear" class="clear" aria-label="Tøm regneuttrykk og svar">AC</button><button id="backspace" aria-label="Slett forrige tegn">⌫</button><button data-insert="%" aria-label="Prosent">%</button><button data-insert="÷" class="operator" aria-label="Divisjon">÷</button>
-<button data-insert="7">7</button><button data-insert="8">8</button><button data-insert="9">9</button><button data-insert="×" class="operator" aria-label="Multiplikasjon">×</button>
-<button data-insert="4">4</button><button data-insert="5">5</button><button data-insert="6">6</button><button data-insert="−" class="operator" aria-label="Subtraksjon">−</button>
-<button data-insert="1">1</button><button data-insert="2">2</button><button data-insert="3">3</button><button data-insert="+" class="operator" aria-label="Addisjon">+</button>
-<button data-insert="0">0</button><button data-insert="," aria-label="Desimaltegn">,</button><button data-insert="E" aria-label="Tierpotens i vitenskapelig notasjon">EXP</button><button id="equals" class="equals" aria-label="Beregn">=</button>
-</div></div><div class="hint"><span><kbd>Enter</kbd> beregn <span class="hint-gap"><kbd>Esc</kbd> tøm</span></span><span>ⁿ√x skrives som root(3;27)</span></div></div>
-<div id="stats-panel" role="tabpanel" aria-labelledby="stats-tab" hidden><div class="stats-intro"><h2>Standardavvik</h2><p>Legg inn tallverdier og frekvens. Bruk komma eller punktum som desimaltegn.</p></div><div class="stats-layout"><div><div class="table-head"><span>VERDI</span><span>FREKVENS</span><span></span></div><div id="data-rows"></div><button class="add-row" id="add-row">+ Legg til verdi</button><div class="stats-actions"><button id="stats-calculate" class="primary">Beregn statistikk</button><button id="stats-clear" class="text-button">Tøm data</button></div><p class="stats-error" id="stats-message" role="status"></p></div><div class="stats-results" aria-live="polite" aria-atomic="true"><p class="eyebrow">RESULTATER</p><div><span>Antall observasjoner <i>n</i></span><output id="stat-n">—</output></div><div><span>Gjennomsnitt <i>x̄</i></span><output id="stat-mean">—</output></div><div><span>Standardavvik <i>σ</i><small>Populasjon · deler på n</small></span><output id="stat-population">—</output></div><div><span>Standardavvik <i>s</i><small>Utvalg · deler på n − 1</small></span><output id="stat-sample">—</output></div><p id="sample-note">Utvalgsstandardavvik krever minst to observasjoner.</p></div></div></div>
-</section><footer><span class="local" id="status-badge"><span aria-hidden="true">●</span> <span id="status-text">Klargjør offlinebruk …</span></span><span>Teknisk demo · Vår 2027</span></footer><p class="scope-note">Utviklet som forslag til et avgrenset hjelpemiddel i SEB for våren 2027. Bruk på eksamen krever særskilt godkjenning fra Udir og teknisk verifisering.</p></main>
-<dialog id="help"><div class="dialog-heading"><h2>Brukerveiledning</h2><button id="help-close" aria-label="Lukk brukerveiledning">×</button></div><div class="help-content"><h3>Regning med tall</h3><p>Bruk tastene eller skriv i uttrykksfeltet. Trykk Enter eller = for å beregne. Bruk × eller * mellom faktorer, også foran parenteser og π.</p><p>Brøk skrives med ÷, for eksempel (1÷2)+(1÷3). EXP skriver tierpotens: 1,5E−3 betyr 0,0015. % deler tallet foran på 100; 200+10% betyr 200,1.</p><h3>Potenser og røtter</h3><p>Bruk ^ for potens. −2^2 gir −4, mens (−2)^2 gir 4. Skriv root(3;27) for tredjeroten av 27. √x, log og ln bruker parenteser.</p><h3>Vinkler og presisjon</h3><p>DEG betyr grader, RAD betyr radianer. sin⁻¹, cos⁻¹ og tan⁻¹ beregner den inverse funksjonen. Resultater vises med opptil 12 gjeldende sifre; beregningene bruker binære flyttall og kan ha avrundingsfeil.</p><h3>Statistikk</h3><p>Én tallverdi per rad. Frekvensen er antall ganger verdien forekommer. Begge standardavvik vises med tydelig merking. Inntil 200 rader og 1 000 000 observasjoner. Data beholdes bare mens siden er åpen.</p><h3>Lokal beregning og offlinebruk</h3><p>Alle matematiske beregninger utføres lokalt på enheten i nettleseren. En ferdig innlastet kalkulator trenger ingen beregningsserver. Oppfrisking uten nett forutsetter ferdig installert offline-cache og støtte i den aktuelle nettleseren eller SEB-versjonen.</p></div></dialog></body></html>
+<main><div class="intro"><div><p class="eyebrow">ET AVGRENSET VERKTØY FOR MATEMATIKK</p><h1>Plass til å tenke.</h1><p class="lead">Regn med tall og brøk. Før løsningen på papir.</p></div><button class="help-button" id="help-open">? <span>Brukerveiledning</span></button></div>
+<section class="workspace" aria-label="Kalkulator">
+<div class="toolbar">
+  <div class="tabs" role="tablist" aria-label="Verktøy">
+    <button id="calc-tab" role="tab" aria-selected="true" aria-controls="calc-panel" tabindex="0">Kalkulator</button>
+    <button id="stats-tab" role="tab" aria-selected="false" aria-controls="stats-panel" tabindex="-1">Statistikk</button>
+  </div>
+  <div class="controls-group">
+    <span id="mem-indicator" class="mem-tag" hidden aria-label="Minne i bruk">M</span>
+    <div class="format-group" role="group" aria-label="Visningsformat">
+      <button id="fmt-norm" aria-pressed="true" title="Normalvisning">NORM</button>
+      <button id="fmt-fix" aria-pressed="false" title="Fast antall desimaler">FIX</button>
+      <button id="fmt-sci" aria-pressed="false" title="Vitenskapelig notasjon">SCI</button>
+    </div>
+    <div class="angle" role="group" aria-label="Vinkelmodus">
+      <button id="deg" aria-pressed="true">DEG</button>
+      <button id="rad" aria-pressed="false">RAD</button>
+    </div>
+  </div>
+</div>
+
+<div id="calc-panel" role="tabpanel" aria-labelledby="calc-tab">
+  <div class="screen">
+    <div class="screen-header">
+      <label for="expression">REGNEUTTRYKK</label>
+      <div class="screen-actions">
+        <button id="btn-sd" class="small-btn" title="Bytt mellom brøk og desimaltall">S⇔D</button>
+        <button id="btn-mixed" class="small-btn" title="Bytt mellom uekte brøk og blandet tall">a b/c</button>
+      </div>
+    </div>
+    <input id="expression" type="text" maxlength="2048" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="calc-message" placeholder="Skriv et uttrykk, eller bruk tastene">
+    <div class="answer-line">
+      <span id="answer-label">SVAR</span>
+      <output id="answer" aria-live="polite" aria-atomic="true">0</output>
+    </div>
+    <p id="calc-message" role="status">Grader (DEG) · NORM · 12 gjeldende sifre</p>
+  </div>
+
+  <div class="memory-bar" role="group" aria-label="Minnefunksjoner">
+    <button id="btn-mplus" title="Legg til i minne M">M+</button>
+    <button id="btn-mminus" title="Trekk fra i minne M">M−</button>
+    <button id="btn-sto" title="Lagre i minne A–Y">STO</button>
+    <button id="btn-rcl" title="Hent fra minne A–Y">RCL</button>
+  </div>
+
+  <div class="keypad">
+    <div class="science" aria-label="Vitenskapelige funksjoner">
+      <button data-insert="sqrt(" aria-label="Kvadratrot">√x</button>
+      <button data-insert="^2" aria-label="Kvadrat">x²</button>
+      <button data-insert="^" aria-label="Potens">xʸ</button>
+      <button data-insert="root(" aria-label="N-te rot">ⁿ√x</button>
+      <button data-insert="log(" aria-label="Logaritme med grunntall 10">log</button>
+      <button data-insert="ln(" aria-label="Naturlig logaritme">ln</button>
+      <button data-insert="10^(" aria-label="10 opphøyd i">10ˣ</button>
+      <button data-insert="e^(" aria-label="e opphøyd i">eˣ</button>
+      <button data-insert="pi" aria-label="Pi">π</button>
+      <button data-insert="sin(" aria-label="Sinus">sin</button>
+      <button data-insert="cos(" aria-label="Cosinus">cos</button>
+      <button data-insert="tan(" aria-label="Tangens">tan</button>
+      <button data-insert="asin(" aria-label="Invers sinus">sin⁻¹</button>
+      <button data-insert="acos(" aria-label="Invers cosinus">cos⁻¹</button>
+      <button data-insert="atan(" aria-label="Invers tangens">tan⁻¹</button>
+      <button data-insert="!" aria-label="Fakultet">n!</button>
+      <button data-insert=" nPr " aria-label="Permutasjoner">nPr</button>
+      <button data-insert=" nCr " aria-label="Kombinasjoner">nCr</button>
+      <button data-insert="(" aria-label="Venstre parentes">(</button>
+      <button data-insert=")" aria-label="Høyre parentes">)</button>
+      <button data-insert=";" aria-label="Skilletegn">;</button>
+    </div>
+
+    <div class="numbers" aria-label="Tall og regnearter">
+      <button id="clear" class="clear" aria-label="Tøm regneuttrykk og svar">AC</button>
+      <button id="backspace" aria-label="Slett forrige tegn">⌫</button>
+      <button data-insert="%" aria-label="Prosent">%</button>
+      <button data-insert="÷" class="operator" aria-label="Divisjon">÷</button>
+      <button data-insert="7">7</button>
+      <button data-insert="8">8</button>
+      <button data-insert="9">9</button>
+      <button data-insert="×" class="operator" aria-label="Multiplikasjon">×</button>
+      <button data-insert="4">4</button>
+      <button data-insert="5">5</button>
+      <button data-insert="6">6</button>
+      <button data-insert="−" class="operator" aria-label="Subtraksjon">−</button>
+      <button data-insert="1">1</button>
+      <button data-insert="2">2</button>
+      <button data-insert="3">3</button>
+      <button data-insert="+" class="operator" aria-label="Addisjon">+</button>
+      <button data-insert="0">0</button>
+      <button data-insert="," aria-label="Desimaltegn">,</button>
+      <button data-insert="E" aria-label="Tierpotens i vitenskapelig notasjon">EXP</button>
+      <button id="equals" class="equals" aria-label="Beregn">=</button>
+    </div>
+  </div>
+
+  <div class="hint">
+    <span><kbd>Enter</kbd> beregn <span class="hint-gap"><kbd>Esc</kbd> tøm</span></span>
+    <span>Brøk skrives med ÷ f.eks. 1÷2 + 1÷3 · S⇔D veksler brøk/desimal</span>
+  </div>
+</div>
+
+<div id="stats-panel" role="tabpanel" aria-labelledby="stats-tab" hidden>
+  <div class="stats-intro">
+    <h2>Envariabel statistikk</h2>
+    <p>Legg inn tallverdier og frekvenser. Bruk komma eller punktum som desimaltegn.</p>
+  </div>
+  <div class="stats-layout">
+    <div>
+      <div class="table-head"><span>VERDI</span><span>FREKVENS</span><span></span></div>
+      <div id="data-rows"></div>
+      <button class="add-row" id="add-row">+ Legg til verdi</button>
+      <div class="stats-actions">
+        <button id="stats-calculate" class="primary">Beregn statistikk</button>
+        <button id="stats-clear" class="text-button">Tøm data</button>
+      </div>
+      <p class="stats-error" id="stats-message" role="status"></p>
+    </div>
+    <div class="stats-results" aria-live="polite" aria-atomic="true">
+      <p class="eyebrow">RESULTATER</p>
+      <div><span>Antall observasjoner <i>n</i></span><output id="stat-n">—</output></div>
+      <div><span>Sum <i>Σx</i></span><output id="stat-sumX">—</output></div>
+      <div><span>Kvadratsum <i>Σx²</i></span><output id="stat-sumX2">—</output></div>
+      <div><span>Minimum <i>minX</i></span><output id="stat-min">—</output></div>
+      <div><span>Maksimum <i>maxX</i></span><output id="stat-max">—</output></div>
+      <div><span>Gjennomsnitt <i>x̄</i></span><output id="stat-mean">—</output></div>
+      <div><span>Standardavvik <i>σ</i><small>Populasjon · deler på n</small></span><output id="stat-population">—</output></div>
+      <div><span>Standardavvik <i>s</i><small>Utvalg · deler på n − 1</small></span><output id="stat-sample">—</output></div>
+      <p id="sample-note">Utvalgsstandardavvik krever minst to observasjoner.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<footer><span class="local" id="status-badge"><span aria-hidden="true">●</span> <span id="status-text">Klargjør offlinebruk …</span></span><span>Teknisk demo · Vår 2027</span></footer>
+<p class="scope-note">Utviklet som forslag til et avgrenset hjelpemiddel i SEB for våren 2027. Bruk på eksamen krever særskilt godkjenning fra Udir og teknisk verifisering.</p>
+</main>
+
+<dialog id="help">
+<div class="dialog-heading">
+  <h2>Brukerveiledning</h2>
+  <button id="help-close" aria-label="Lukk brukerveiledning">×</button>
+</div>
+<div class="help-content">
+  <h3>Brøkregning og eksakte svar</h3>
+  <p>Skriv brøker med divisjonstegnet ÷, for eksempel <code>1÷2 + 1÷3</code>. Resultatet vises som forkortet brøk <code>5/6</code>.</p>
+  <p>Bruk <strong>S⇔D</strong> for å veksle mellom brøk og desimaltall. Bruk <strong>a b/c</strong> for å veksle mellom uekte brøk (f.eks. <code>3/2</code>) og blandet tall (<code>1 1/2</code>).</p>
+  <p>Desimaltall med endelig antall desimaler (f.eks. <code>0,1 + 0,2</code>) behandles eksakt og gir <code>3/10</code>.</p>
+
+  <h3>Kombinatorikk</h3>
+  <p><strong>n!</strong> (fakultet): <code>5!</code> gir <code>120</code>. <code>0!</code> er <code>1</code>. Maksimalt 69! før tallområdet overskrides.</p>
+  <p><strong>nPr</strong> (permutasjoner): <code>5 nPr 2</code> gir <code>20</code>.</p>
+  <p><strong>nCr</strong> (kombinasjoner): <code>5 nCr 2</code> gir <code>10</code>. <code>5 nCr 0</code> er <code>1</code>.</p>
+
+  <h3>Ans og minnevariabler</h3>
+  <p><strong>Ans</strong> inneholder verdien fra forrige vellykkede beregning. Starter du et nytt uttrykk med en regneart (+, −, ×, ÷), settes Ans automatisk inn foran.</p>
+  <p><strong>M+, M−</strong>: Legger til eller trekker fra verdien i minne M. Bokstaven <strong>M</strong> vises i topplinjen når minne inneholder en verdi.</p>
+  <p><strong>STO / RCL</strong>: Lagre eller hente verdier i de 9 tallminnene: <code>A, B, C, D, E, F, M, X, Y</code>. Minner slettes automatisk når økten eller vinduet lukkes.</p>
+
+  <h3>Visningsformater</h3>
+  <p><strong>NORM</strong>: Standard visning med opptil 12 gjeldende sifre.</p>
+  <p><strong>FIX</strong>: Avrunder visningen til et fast antall desimaler (0–9).</p>
+  <p><strong>SCI</strong>: Viser tallet i vitenskapelig notasjon med valgt antall gjeldende sifre (1–9).</p>
+  <p><em>Merk: Endring av visningsformat avrunder kun presentasjonen og endrer aldri den interne beregnede verdien.</em></p>
+
+  <h3>Envariabel statistikk</h3>
+  <p>Fyll inn verdier og frekvenser. Kalkulatoren beregner <code>n</code>, sum <code>Σx</code>, kvadratsum <code>Σx²</code>, minimum <code>minX</code>, maksimum <code>maxX</code>, gjennomsnitt <code>x̄</code>, populasjonsstandardavvik <code>σ</code> og utvalgsstandardavvik <code>s</code>.</p>
+
+  <h3>Lokal beregning og offlinebruk</h3>
+  <p>Alle matematiske beregninger utføres 100 % lokalt på enheten i nettleseren. Ingen data sendes til eksterne servere.</p>
+</div>
+</dialog>
+</body>
+</html>
