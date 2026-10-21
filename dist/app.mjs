@@ -1,4 +1,6 @@
 import {calculate,statistics,parseScalar,format,LIMITS} from './engine.mjs';
+import {RELEASE} from './release.mjs';
+
 const $=id=>document.getElementById(id),input=$('expression');let mode='DEG',completed=false,lastResult=0;
 function message(text,error=false){$('calc-message').textContent=text;$('calc-message').classList.toggle('error',error);}
 function invalidate(){completed=false;$('answer').textContent='—';message((mode==='DEG'?'Grader (DEG)':'Radianer (RAD)')+' · 12 gjeldende sifre i visningen');}
@@ -29,9 +31,11 @@ const OFFLINE_STATES = {
   UNCONFIRMED: 'UNCONFIRMED'
 };
 let offlineState = OFFLINE_STATES.INITIALIZING;
+let offlineDetail = '';
 
 function setOfflineState(state, detail = '') {
   offlineState = state;
+  if (detail) offlineDetail = detail;
   const badge = $('status-badge'), text = $('status-text');
   if (!badge || !text) return;
 
@@ -47,7 +51,7 @@ function setOfflineState(state, detail = '') {
       badge.style.color = '#536770';
       break;
     case OFFLINE_STATES.UNCONFIRMED:
-      text.textContent = (detail || 'Offlineberedskap kunne ikke bekreftes') + netDetail;
+      text.textContent = (offlineDetail || 'Offlineberedskap kunne ikke bekreftes') + netDetail;
       badge.style.color = '#a32332';
       break;
     case OFFLINE_STATES.UNSUPPORTED:
@@ -57,9 +61,39 @@ function setOfflineState(state, detail = '') {
   }
 }
 
-// Lytter på nettverkstilstand kun som veiledende signal (endrer ikke verifisert cache-tilstand)
+// Lytter på nettverkstilstand kun som veiledende signal (bevarer årsak og tilstand)
 window.addEventListener('online', () => setOfflineState(offlineState));
 window.addEventListener('offline', () => setOfflineState(offlineState));
+
+// Registrering og toveis verifisering med MessageChannel og tidsavbrudd
+const TIMEOUT_MS = 6000;
+
+function verifyWorkerWithChannel(worker) {
+  return new Promise((resolve, reject) => {
+    const channel = new MessageChannel();
+    const requestId = 'req_' + Math.random().toString(36).slice(2);
+    const timer = setTimeout(() => {
+      channel.port1.close();
+      reject(new Error('Tidsavbrudd ved vent på verifisering fra service worker.'));
+    }, TIMEOUT_MS);
+
+    channel.port1.onmessage = (event) => {
+      clearTimeout(timer);
+      channel.port1.close();
+      const res = event.data;
+      if (!res || res.type !== 'VERIFY_CACHE_RESULT' || res.requestId !== requestId) {
+        return reject(new Error('Uventet eller manglende svar-ID fra service worker.'));
+      }
+      resolve(res);
+    };
+
+    worker.postMessage({
+      type: 'VERIFY_CACHE',
+      requestId: requestId,
+      expectedVersion: RELEASE.version
+    }, [channel.port2]);
+  });
+}
 
 function initServiceWorker() {
   if (!('serviceWorker' in navigator)) {
@@ -69,52 +103,80 @@ function initServiceWorker() {
 
   setOfflineState(OFFLINE_STATES.INITIALIZING);
 
-  navigator.serviceWorker.addEventListener('message', (event) => {
-    if (event.data && event.data.type === 'VERIFY_CACHE_RESULT') {
-      if (event.data.verified && navigator.serviceWorker.controller) {
-        setOfflineState(OFFLINE_STATES.READY);
-      } else {
-        setOfflineState(OFFLINE_STATES.UNCONFIRMED, 'Cache er ufullstendig');
-        console.warn('Eksamenskalkulator: Verifisering av offline-cache feilet.', event.data);
-      }
+  // Hvis kontrollerende worker endres underveis (controllerchange)
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (navigator.serviceWorker.controller) {
+      checkActiveWorker(navigator.serviceWorker.controller);
     }
   });
 
+  async function checkActiveWorker(worker) {
+    if (!worker || worker !== navigator.serviceWorker.controller) {
+      setOfflineState(OFFLINE_STATES.INITIALIZING);
+      return;
+    }
+
+    try {
+      const res = await verifyWorkerWithChannel(worker);
+      if (res.version !== RELEASE.version) {
+        setOfflineState(OFFLINE_STATES.UNCONFIRMED, 'Versjonsavvik i worker');
+        console.warn('Eksamenskalkulator: Versjonsavvik.', { expected: RELEASE.version, got: res.version });
+        return;
+      }
+      if (!res.verified) {
+        setOfflineState(OFFLINE_STATES.UNCONFIRMED, 'Cache er ufullstendig');
+        console.warn('Eksamenskalkulator: Cachen inneholder ikke samtlige påkrevde filer.', res);
+        return;
+      }
+      setOfflineState(OFFLINE_STATES.READY);
+    } catch (err) {
+      setOfflineState(OFFLINE_STATES.UNCONFIRMED, 'Verifisering feilet');
+      console.warn('Eksamenskalkulator: Feil under verifisering:', err.message);
+    }
+  }
+
+  // Tidsavbrudd for initialisering
+  const initTimeout = setTimeout(() => {
+    if (offlineState === OFFLINE_STATES.INITIALIZING) {
+      setOfflineState(OFFLINE_STATES.UNCONFIRMED, 'Tidsavbrudd ved klargjøring');
+    }
+  }, TIMEOUT_MS);
+
   navigator.serviceWorker.register('./sw.js', { scope: './' })
     .then((reg) => {
-      // Hvis siden allerede er kontrollert og worker er aktiv:
-      const checkActive = () => {
-        const worker = reg.active || navigator.serviceWorker.controller;
-        if (worker) {
-          worker.postMessage({ type: 'VERIFY_CACHE' });
-        } else {
-          setOfflineState(OFFLINE_STATES.INITIALIZING);
-        }
-      };
-
       if (reg.installing) {
         reg.installing.addEventListener('statechange', (e) => {
-          if (e.target.state === 'activated') {
-            checkActive();
+          if (e.target.state === 'redundant') {
+            clearTimeout(initTimeout);
+            setOfflineState(OFFLINE_STATES.UNCONFIRMED, 'Installasjon feilet (redundant)');
+          } else if (e.target.state === 'activated') {
+            clearTimeout(initTimeout);
+            if (navigator.serviceWorker.controller) {
+              checkActiveWorker(navigator.serviceWorker.controller);
+            }
           }
         });
       }
 
-      if (reg.waiting) {
-        // En ny versjon venter; behold eksisterende versjon i denne elevøkten
-        console.info('Eksamenskalkulator: En ny programversjon venter til neste økt.');
-      }
-
       navigator.serviceWorker.ready.then(() => {
-        checkActive();
+        clearTimeout(initTimeout);
+        if (navigator.serviceWorker.controller) {
+          checkActiveWorker(navigator.serviceWorker.controller);
+        } else {
+          // Hvis siden ikke har controller enda (første gangs innlasting uten refresh):
+          // En ny worker kan ha aktivert seg, men kontrollerer først ved neste navigering
+          setOfflineState(OFFLINE_STATES.INITIALIZING, 'Venter på sidekontroll');
+        }
       }).catch((err) => {
+        clearTimeout(initTimeout);
         setOfflineState(OFFLINE_STATES.UNCONFIRMED);
-        console.error('Eksamenskalkulator: Feil under klargjøring av service worker:', err);
+        console.warn('Eksamenskalkulator: ready feilet:', err.message);
       });
     })
     .catch((err) => {
-      setOfflineState(OFFLINE_STATES.UNCONFIRMED);
-      console.error('Eksamenskalkulator: Registrering av service worker feilet:', err);
+      clearTimeout(initTimeout);
+      setOfflineState(OFFLINE_STATES.UNCONFIRMED, 'Registrering feilet');
+      console.warn('Eksamenskalkulator: Registrering feilet:', err.message);
     });
 }
 

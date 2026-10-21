@@ -1,0 +1,145 @@
+/* Styles spesifikke for info.html - ekstern fil iht. style-src 'self' */
+.info-container {
+  max-width: 900px;
+  margin: 36px auto;
+  padding: 0 20px;
+}
+.info-card {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(23, 61, 52, 0.05);
+  margin-bottom: 28px;
+}
+.info-card h1 {
+  font-family: Georgia, serif;
+  font-size: 28px;
+  color: var(--ink);
+  margin-top: 0;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 12px;
+  letter-spacing: -0.5px;
+}
+.info-card h2 {
+  font-family: Georgia, serif;
+  font-size: 20px;
+  color: var(--teal);
+  margin-top: 28px;
+  margin-bottom: 12px;
+}
+.info-card h3 {
+  font-size: 15px;
+  color: var(--ink);
+  margin-top: 18px;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+.info-card p,
+.info-card li {
+  line-height: 1.7;
+  font-size: 14px;
+  color: #2c424d;
+}
+.info-card ul {
+  padding-left: 22px;
+  margin: 10px 0 16px;
+}
+.calc-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 16px 0;
+}
+.calc-table {
+  width: 100%;
+  min-width: 580px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.calc-table th,
+.calc-table td {
+  padding: 10px 12px;
+  border: 1px solid #dce4df;
+  text-align: left;
+  vertical-align: top;
+}
+.calc-table th {
+  background: #eef5f3;
+  color: var(--teal);
+  font-weight: 700;
+}
+.calc-table td a {
+  color: var(--teal);
+}
+.action-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 18px 0;
+}
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--blue);
+  color: #ffffff;
+  padding: 12px 18px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+.btn-action:hover {
+  filter: brightness(0.92);
+}
+.btn-secondary {
+  background: #eef5f3;
+  color: var(--teal);
+  border: 1px solid #c2d6d0;
+}
+.highlight-banner {
+  background: #f3f7f5;
+  border-left: 4px solid var(--teal);
+  padding: 16px 20px;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 24px;
+}
+.back-link {
+  display: inline-block;
+  margin-bottom: 20px;
+  color: var(--teal);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+}
+.info-footer {
+  max-width: 900px;
+  margin: 0 auto;
+  text-align: center;
+  color: var(--muted);
+  font-size: 11px;
+  padding: 20px 0 40px;
+}
+
+@media (max-width: 650px) {
+  .info-container {
+    padding: 0 14px;
+    margin: 20px auto;
+  }
+  .info-card {
+    padding: 20px 16px;
+    border-radius: 8px;
+  }
+  .info-card h1 {
+    font-size: 22px;
+  }
+  .action-row {
+    flex-direction: column;
+  }
+  .btn-action {
+    width: 100%;
+    justify-content: center;
+  }
+}

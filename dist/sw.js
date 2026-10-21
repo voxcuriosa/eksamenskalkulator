@@ -1,21 +1,33 @@
 // Service Worker for Eksamenskalkulator 2027 (avgrenset til /kalkulator/)
-const APP_VERSION = 'v0.2.0';
+const APP_VERSION = '0.3.0';
 const CACHE_PREFIX = 'eksamenskalkulator-';
-const CURRENT_CACHE_NAME = `${CACHE_PREFIX}${APP_VERSION}`;
+const CURRENT_CACHE_NAME = `${CACHE_PREFIX}v${APP_VERSION}`;
 
-// Eksakt liste over nødvendige statiske ressurser for denne versjonen
+// Eksakt liste over nødvendige statiske ressurser som utgjør denne utgivelsen
 const REQUIRED_RESOURCES = [
   './',
   './index.html',
   './styles.css',
   './app.mjs',
   './engine.mjs',
+  './release.mjs',
   './manifest.webmanifest'
 ];
 
+// Nøyaktig liste over tillatte normaliserte baner under opprinnelsen
+const ALLOWED_PATHS = new Set([
+  '/kalkulator/',
+  '/kalkulator/index.html',
+  '/kalkulator/styles.css',
+  '/kalkulator/app.mjs',
+  '/kalkulator/engine.mjs',
+  '/kalkulator/release.mjs',
+  '/kalkulator/manifest.webmanifest'
+]);
+
 self.addEventListener('install', (event) => {
   // Installer alle ressurser for denne utgivelsen samlet
-  // skipWaiting() kalles IKKE ubetinget her; unngår at en ufullstendig eller ny versjon kaprer en aktiv elev-økt
+  // skipWaiting() kalles IKKE her; en pågående elevøkt skal aldri forstyrres
   event.waitUntil(
     caches.open(CURRENT_CACHE_NAME).then((cache) => {
       return cache.addAll(REQUIRED_RESOURCES);
@@ -25,7 +37,7 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   // Slett kun gamle cacher som tilhører denne kalkulatoren (CACHE_PREFIX)
-  // Rører ALDRI andre cacher på voxcuriosa.no
+  // Rører ALDRI andre cacher på samme opprinnelse (f.eks. voxcuriosa-v8)
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
@@ -40,44 +52,54 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Meldinger mellom siden og service worker for verifisering og kontrollert oppdatering
+// Kommunikasjon med MessageChannel eller event.source for verifisering
 self.addEventListener('message', (event) => {
   const data = event.data;
   if (!data || !data.type) return;
 
   if (data.type === 'VERIFY_CACHE') {
-    // Verifiser eksplisitt at alle påkrevde filer faktisk ligger i gjeldende cache
+    const requestId = data.requestId;
     caches.open(CURRENT_CACHE_NAME).then(async (cache) => {
-      let allFound = true;
+      const verifiedList = [];
+      let allPresent = true;
       for (const asset of REQUIRED_RESOURCES) {
         const match = await cache.match(asset);
         if (!match) {
-          allFound = false;
-          break;
+          allPresent = false;
+        } else {
+          verifiedList.push(asset);
         }
       }
-      if (event.source) {
-        event.source.postMessage({
-          type: 'VERIFY_CACHE_RESULT',
-          version: APP_VERSION,
-          cacheName: CURRENT_CACHE_NAME,
-          verified: allFound
-        });
+
+      const responsePayload = {
+        type: 'VERIFY_CACHE_RESULT',
+        requestId: requestId,
+        version: APP_VERSION,
+        cacheName: CURRENT_CACHE_NAME,
+        verified: allPresent,
+        verifiedCount: verifiedList.length,
+        requiredCount: REQUIRED_RESOURCES.length
+      };
+
+      if (event.ports && event.ports[0]) {
+        event.ports[0].postMessage(responsePayload);
+      } else if (event.source) {
+        event.source.postMessage(responsePayload);
       }
     }).catch((err) => {
-      if (event.source) {
-        event.source.postMessage({
-          type: 'VERIFY_CACHE_RESULT',
-          version: APP_VERSION,
-          verified: false,
-          error: err.message
-        });
+      const errorPayload = {
+        type: 'VERIFY_CACHE_RESULT',
+        requestId: requestId,
+        version: APP_VERSION,
+        verified: false,
+        error: err.message
+      };
+      if (event.ports && event.ports[0]) {
+        event.ports[0].postMessage(errorPayload);
+      } else if (event.source) {
+        event.source.postMessage(errorPayload);
       }
     });
-  }
-
-  if (data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
   }
 });
 
@@ -86,39 +108,50 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
-  // Avgrens strengt til samme opprinnelse og understien /kalkulator/
-  if (url.origin !== self.location.origin) return;
-  if (!url.pathname.startsWith('/kalkulator/')) return;
+  // 1. Eksterne forespørsler blokkeres med 403 Forbidden for kontrollerte sider
+  if (url.origin !== self.location.origin) {
+    event.respondWith(new Response('Ekstern tilgang er blokkert i kalkulatormodus.', {
+      status: 403,
+      statusText: 'Forbidden',
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+    }));
+    return;
+  }
 
-  // Ikke bruk nettverket som generell reserve for ukjente ressurser; kun håndter de definerte kalkulatorressursene
+  // 2. Forespørsler utenfor /kalkulator/
+  if (!url.pathname.startsWith('/kalkulator/')) {
+    // La workeren ignorere forespørsler til andre nettstedsdeler
+    return;
+  }
+
+  // 3. Kontroller om forespørselen er en av kalkulatorens tillatte ressursadresser
+  // info.html, .seb og sjekksumfiler skal IKKE caches eller betjenes som programressurser av denne workeren
+  const isAllowedPath = ALLOWED_PATHS.has(url.pathname);
+
+  // Hvis det er en ukjent ressurs eller query på en kontrollert kalkulatorside: avvis uten nettverksfallback!
+  if (!isAllowedPath) {
+    event.respondWith(new Response('Uautorisert ressursadresse i eksamensmodus.', {
+      status: 404,
+      statusText: 'Not Found',
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+    }));
+    return;
+  }
+
+  // 4. Betjen strengt fra frosset versjonscache
   event.respondWith(
     caches.open(CURRENT_CACHE_NAME).then((cache) => {
-      // Søk i gjeldende versjonerte cache
       return cache.match(event.request).then((cachedResponse) => {
         if (cachedResponse) {
-          // Frys programversjonen under bruk: returner fra frosset versjonscache
           return cachedResponse;
         }
 
-        // Hent fra nettverk kun hvis ressursen ikke var i cache
-        return fetch(event.request).then((networkResponse) => {
-          // Ikke legg ukjente eller feilende responser inn i cachen
-          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-            return networkResponse;
-          }
-          return networkResponse;
-        }).catch(() => {
-          // Begrens navigasjonsfallback til kalkulatorens egne innganger
-          if (event.request.mode === 'navigate') {
-            if (url.pathname === '/kalkulator/' || url.pathname === '/kalkulator/index.html') {
-              return cache.match('./index.html');
-            }
-          }
-          return new Response('Ressursen er ikke tilgjengelig offline.', {
-            status: 503,
-            statusText: 'Service Unavailable',
-            headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-          });
+        // Hvis en påkrevd ressurs mangler i ferdig installert cache:
+        // Skal IKKE repareres med vilkårlig nettverkshenting inn i gammel versjon!
+        return new Response('Ressursen mangler i den frosne utgivelsescachen.', {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: { 'Content-Type': 'text/plain; charset=utf-8' }
         });
       });
     })

@@ -42,6 +42,7 @@
     <true/>
     <key>URLFilterRules</key>
     <array>
+        <!-- Nøyaktige tillatte inngangs- og app-adresser for kalkulatoren -->
         <dict>
             <key>action</key>
             <integer>1</integer>
@@ -50,7 +51,77 @@
             <key>regex</key>
             <false/>
             <key>expression</key>
-            <string>https://voxcuriosa.no/kalkulator/*</string>
+            <string>https://voxcuriosa.no/kalkulator/</string>
+        </dict>
+        <dict>
+            <key>action</key>
+            <integer>1</integer>
+            <key>active</key>
+            <true/>
+            <key>regex</key>
+            <false/>
+            <key>expression</key>
+            <string>https://voxcuriosa.no/kalkulator/index.html</string>
+        </dict>
+        <dict>
+            <key>action</key>
+            <integer>1</integer>
+            <key>active</key>
+            <true/>
+            <key>regex</key>
+            <false/>
+            <key>expression</key>
+            <string>https://voxcuriosa.no/kalkulator/styles.css</string>
+        </dict>
+        <dict>
+            <key>action</key>
+            <integer>1</integer>
+            <key>active</key>
+            <true/>
+            <key>regex</key>
+            <false/>
+            <key>expression</key>
+            <string>https://voxcuriosa.no/kalkulator/app.mjs</string>
+        </dict>
+        <dict>
+            <key>action</key>
+            <integer>1</integer>
+            <key>active</key>
+            <true/>
+            <key>regex</key>
+            <false/>
+            <key>expression</key>
+            <string>https://voxcuriosa.no/kalkulator/engine.mjs</string>
+        </dict>
+        <dict>
+            <key>action</key>
+            <integer>1</integer>
+            <key>active</key>
+            <true/>
+            <key>regex</key>
+            <false/>
+            <key>expression</key>
+            <string>https://voxcuriosa.no/kalkulator/release.mjs</string>
+        </dict>
+        <dict>
+            <key>action</key>
+            <integer>1</integer>
+            <key>active</key>
+            <true/>
+            <key>regex</key>
+            <false/>
+            <key>expression</key>
+            <string>https://voxcuriosa.no/kalkulator/manifest.webmanifest</string>
+        </dict>
+        <dict>
+            <key>action</key>
+            <integer>1</integer>
+            <key>active</key>
+            <true/>
+            <key>regex</key>
+            <false/>
+            <key>expression</key>
+            <string>https://voxcuriosa.no/kalkulator/sw.js</string>
         </dict>
     </array>
     <key>blockPopUpWindows</key>

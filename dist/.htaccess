@@ -17,7 +17,7 @@ AddType application/x-safeexambrowser .seb
   </FilesMatch>
 
   # 2. Service Worker (sw.js):
-  # Krever connect-src 'self' for å utføre interne cache.addAll() og fetch() under installasjon og oppdatering av samme origin
+  # Krever connect-src 'self' for å utføre kontrollerte installasjonskall til samme origin
   <Files "sw.js">
     Header set Content-Security-Policy "default-src 'none'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
     Header set Cache-Control "no-cache, no-store, must-revalidate"

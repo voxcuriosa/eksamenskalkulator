@@ -18,7 +18,6 @@ assert.doesNotMatch(appSource, /https?:\/\//);
 const swSource = fs.readFileSync('dist/sw.js', 'utf8');
 assert.doesNotMatch(swSource, /\b(?:eval|Function|XMLHttpRequest|WebSocket|EventSource|SharedWorker)\s*\(/);
 assert.doesNotMatch(swSource, /\b(?:sendBeacon|localStorage|sessionStorage|indexedDB|document)\b/);
-// sw.js skal ikke inneholde eksterne domener
 assert.doesNotMatch(swSource, /https?:\/\/(?!voxcuriosa\.no)/);
 
 // 4. Kontroller index.html og CSP
@@ -28,17 +27,28 @@ assert.match(html, /worker-src 'self'/);
 assert.match(html, /manifest-src 'self'/);
 assert.doesNotMatch(html, /\son[a-z]+=|javascript:|<iframe|<form|<object|<embed/i);
 
+// Kontroller at ingen inline-stil eksisterer
+assert.doesNotMatch(html, /<style\b/i);
+
 const localAssets = [...html.matchAll(/(?:src|href)="([^"]+)"/g)]
   .map(m => m[1])
   .filter(link => !link.startsWith('http'))
   .sort();
 
+// index.html skal utelukkende laste app-ressurser (ikke info.html eller SEB-fil direkte)
 assert.deepEqual(
   localAssets,
-  ['app.mjs', 'info.html', 'manifest.webmanifest', 'styles.css']
+  ['app.mjs', 'manifest.webmanifest', 'styles.css']
 );
 
-// 5. Oppdater SHA-256 sjekksummer for alle distribusjonsfiler (unntatt SHA256SUMS.json selv)
+// 5. Kontroller info.html
+const infoHtml = fs.readFileSync('dist/info.html', 'utf8');
+assert.doesNotMatch(infoHtml, /<style\b/i);
+assert.doesNotMatch(infoHtml, /\sstyle="/i);
+assert.match(infoHtml, /<link rel="stylesheet" href="info\.css">/);
+assert.match(infoHtml, /<h1\b[^>]*>Sikkerhetstiltak, SEB og kostnadsscenario<\/h1>/);
+
+// 6. Oppdater SHA-256 sjekksummer for alle distribusjonsfiler (unntatt SHA256SUMS.json selv)
 const hashes = {};
 for (const file of fs.readdirSync('dist').sort()) {
   if (file === 'SHA256SUMS.json') continue;

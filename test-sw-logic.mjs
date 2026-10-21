@@ -22,12 +22,21 @@ if (!sw.includes("url.pathname.startsWith('/kalkulator/')")) {
   throw new Error('Mangler stibegrensning');
 }
 
-// 5. Ingen skipWaiting() kjøres under installasjon
+// 5. Ingen skipWaiting() under installasjon
 const installBlock = sw.slice(sw.indexOf("addEventListener('install'"), sw.indexOf("addEventListener('activate'"));
-// Fjern kommentarer først
 const installCode = installBlock.replace(/\/\/.*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
 if (/skipWaiting\s*\(/.test(installCode)) {
   throw new Error('skipWaiting() kalles i install event; kan kapre aktiv elevøkt!');
 }
 
-console.log('✔ Service Worker arkitekturtest bestått: unikt cacheprefiks, avgrenset sletting, frosset versjon, ingen overstyring av aktiv økt.');
+// 6. Ingen generell nettverksfallback i fetch
+if (sw.includes('return fetch(event.request)')) {
+  throw new Error('sw.js inneholder fortsatt generell nettverksfallback!');
+}
+
+// 7. Avvisning av ukjente baner
+if (!sw.includes('ALLOWED_PATHS.has(url.pathname)')) {
+  throw new Error('sw.js mangler kontroll mot ALLOWED_PATHS!');
+}
+
+console.log('✔ Service Worker arkitekturtest v0.3.0 bestått: frosset versjon, ingen nettverksfallback, avgrenset scope og cacher.');
