@@ -1,0 +1,9 @@
+{
+  "name": "Eksamenskalkulator 2027",
+  "short_name": "Kalkulator",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f3f5f2",
+  "theme_color": "#172e39",
+  "description": "Avgrenset vitenskapelig eksamenskalkulator for SEB"
+}

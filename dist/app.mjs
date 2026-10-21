@@ -20,3 +20,102 @@ function addRow(){if($('data-rows').children.length>=LIMITS.rows)return;const id
 $('add-row').addEventListener('click',()=>addRow()?.focus());$('stats-clear').addEventListener('click',()=>{$('data-rows').replaceChildren();rowId=0;clearStatsResults();for(let i=0;i<3;i++)addRow();});
 $('stats-calculate').addEventListener('click',()=>{try{const rows=[];for(const row of $('data-rows').children){const [v,f]=row.querySelectorAll('input');if(!v.value.trim()){if(f.value.trim()!==''&&f.value.trim()!=='1')throw new Error('En rad med frekvens må også ha en verdi.');continue;}if(!/^\d+$/.test(f.value.trim()))throw new Error('Frekvens må være et positivt heltall.');rows.push({value:parseScalar(v.value),frequency:Number(f.value)});}const result=statistics(rows);for(const n of ['n','mean','population','sample'])$('stat-'+n).textContent=format(result[n]);$('stats-message').textContent='';}catch(e){clearStatsResults();$('stats-message').textContent=e.message;}});
 for(let i=0;i<3;i++)addRow();$('help-open').addEventListener('click',()=>$('help').showModal());$('help-close').addEventListener('click',()=>$('help').close());
+
+// Tilstandsmaskin for pålitelig offline-status
+const OFFLINE_STATES = {
+  UNSUPPORTED: 'UNSUPPORTED',
+  INITIALIZING: 'INITIALIZING',
+  READY: 'READY',
+  UNCONFIRMED: 'UNCONFIRMED'
+};
+let offlineState = OFFLINE_STATES.INITIALIZING;
+
+function setOfflineState(state, detail = '') {
+  offlineState = state;
+  const badge = $('status-badge'), text = $('status-text');
+  if (!badge || !text) return;
+
+  const netDetail = navigator.onLine ? '' : ' · Nett frakoblet';
+
+  switch (state) {
+    case OFFLINE_STATES.READY:
+      text.textContent = 'Klar for offlinebruk' + netDetail;
+      badge.style.color = '#35695c';
+      break;
+    case OFFLINE_STATES.INITIALIZING:
+      text.textContent = 'Klargjør offlinebruk …' + netDetail;
+      badge.style.color = '#536770';
+      break;
+    case OFFLINE_STATES.UNCONFIRMED:
+      text.textContent = (detail || 'Offlineberedskap kunne ikke bekreftes') + netDetail;
+      badge.style.color = '#a32332';
+      break;
+    case OFFLINE_STATES.UNSUPPORTED:
+      text.textContent = 'Service worker støttes ikke i denne nettleseren' + netDetail;
+      badge.style.color = '#8a6d1b';
+      break;
+  }
+}
+
+// Lytter på nettverkstilstand kun som veiledende signal (endrer ikke verifisert cache-tilstand)
+window.addEventListener('online', () => setOfflineState(offlineState));
+window.addEventListener('offline', () => setOfflineState(offlineState));
+
+function initServiceWorker() {
+  if (!('serviceWorker' in navigator)) {
+    setOfflineState(OFFLINE_STATES.UNSUPPORTED);
+    return;
+  }
+
+  setOfflineState(OFFLINE_STATES.INITIALIZING);
+
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'VERIFY_CACHE_RESULT') {
+      if (event.data.verified && navigator.serviceWorker.controller) {
+        setOfflineState(OFFLINE_STATES.READY);
+      } else {
+        setOfflineState(OFFLINE_STATES.UNCONFIRMED, 'Cache er ufullstendig');
+        console.warn('Eksamenskalkulator: Verifisering av offline-cache feilet.', event.data);
+      }
+    }
+  });
+
+  navigator.serviceWorker.register('./sw.js', { scope: './' })
+    .then((reg) => {
+      // Hvis siden allerede er kontrollert og worker er aktiv:
+      const checkActive = () => {
+        const worker = reg.active || navigator.serviceWorker.controller;
+        if (worker) {
+          worker.postMessage({ type: 'VERIFY_CACHE' });
+        } else {
+          setOfflineState(OFFLINE_STATES.INITIALIZING);
+        }
+      };
+
+      if (reg.installing) {
+        reg.installing.addEventListener('statechange', (e) => {
+          if (e.target.state === 'activated') {
+            checkActive();
+          }
+        });
+      }
+
+      if (reg.waiting) {
+        // En ny versjon venter; behold eksisterende versjon i denne elevøkten
+        console.info('Eksamenskalkulator: En ny programversjon venter til neste økt.');
+      }
+
+      navigator.serviceWorker.ready.then(() => {
+        checkActive();
+      }).catch((err) => {
+        setOfflineState(OFFLINE_STATES.UNCONFIRMED);
+        console.error('Eksamenskalkulator: Feil under klargjøring av service worker:', err);
+      });
+    })
+    .catch((err) => {
+      setOfflineState(OFFLINE_STATES.UNCONFIRMED);
+      console.error('Eksamenskalkulator: Registrering av service worker feilet:', err);
+    });
+}
+
+window.addEventListener('load', initServiceWorker);
